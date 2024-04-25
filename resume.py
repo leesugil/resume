@@ -75,7 +75,9 @@ def enter_text(key, q, values):
     Accepts a user input from the questionnaire q, store the response in values[key].
     If nothing is provided (an empty string), function either stores the empty string as the value or keep the originally stored value if there's one.
     """
-    ans = input("\n" + q + "\n> ")
+    ans = input(q + "\n> ")
+    print("")
+
     if (len(ans) == 0 and key in values):
         pass
     else:
@@ -85,7 +87,7 @@ def enter_integer(key, q, values):
     """
     Similar to exter_text(key, q, values) but for integer input
     """
-    ans = input("\n" + q + "\n> ")
+    ans = input(q + "\n> ")
     if (len(ans) == 0 and key in values):
         pass
     else:
@@ -94,12 +96,28 @@ def enter_integer(key, q, values):
         except:
             values[key] = 0
 
+def enter_text_multiline(key, q, values):
+    """
+    Accepts a user input from the questionnaire q, store the response in values[key].
+    If nothing is provided (an empty string), function either stores the empty string as the value or keep the originally stored value if there's one.
+    """
+    ans = input(q + "\n> ")
+    while True:
+        more = input("  ")
+        if more == "":
+            break
+        ans += more
 
-def enter_text_multiple(key, q, values):
+    if (len(ans) == 0 and key in values):
+        pass
+    else:
+        values[key] = ans
+
+def enter_text_csv(key, q, values):
     """
     Similar to enter(key, q, values), but accepts values of a CSV format and stores it as a list.
     """
-    ans = input("\n" + q + "\n>")
+    ans = input(q + "\n> ")
     if (len(ans) == 0 and key in values):
         pass
     else:
@@ -151,55 +169,55 @@ def enter():
 
         key = 'short'
         q = f"Describe your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'medium'
         q = f"Describe your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'long'
         q = f"Describe your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'excellency_short'
         q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'excellency_medium'
         q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'excellency_long'
         q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'problem_short'
         q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'problem_medium'
         q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'problem_long'
         q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'challenge_short'
         q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'challenge_medium'
         q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'challenge_long'
         q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume:"
-        enter_text(key, q, values)
+        enter_text_multiline(key, q, values)
 
         key = 'skillset'
         q = f"List your relevant skills to the {values['role']} role in {values['organization']} (separated by comma)"
-        enter_text_multiple(key, q, values)
+        enter_text_csv(key, q, values)
 
         ket = 'salary'
         q = f"What was the salary of the {values['role']} position in {values['organization']} in USD?"
@@ -211,7 +229,7 @@ def enter():
 
         key = 'hashtag'
         q = f"List hashtags for this resume entry ({values['role']} at {values['organization']}) separated by commas:"
-        enter_text_multiple(key, q, values)
+        enter_text_csv(key, q, values)
 
         retry = input(f"Is the information correct? (y/n)\n{values}\n")
     return values
