@@ -12,9 +12,8 @@
 #       Disabling an existing entry to show up in the output.
 #       It doesn't permanently delete the entry from the database but set the is_active variable to 0.
 
-import sqlite3
-import json
-import atexit
+import sqlite3, json, atexit
+from prompt_toolkit import prompt
 
 conn = sqlite3.connect("resume.db")
 cur = conn.cursor()
@@ -65,11 +64,20 @@ cur.execute("""
 print("'conn' is the current connection to the resume db, 'cur' is the current cursor to it.")
 
 def close_resume():
-    print("resume: Closing cursor and connector")
+    print("resume: closing cursor and connector")
     cur.close()
     conn.close()
 
 atexit.register(close_resume)
+
+def generate_dicts(cur):
+    fields = [d[0] for d in cur.description]
+    while True:
+        rows = cur.fetchmany()
+        if not rows:
+            return
+        for row in rows:
+            yield dict(zip(fields, row))
 
 # Create a Resume Entry
 def enter_text(key, q, values):
@@ -238,8 +246,8 @@ def enter():
         retry = input(f"Is the information correct? (y/n)\n{values}\n")
     return values
 
-def create():
-    """create a new resume entry"""
+def insert():
+    """insert (create) a new resume entry"""
     values = enter()
     fields = values.keys()
     sql = f"""
@@ -249,14 +257,24 @@ def create():
     conn.commit()
     print(f"A new resume entry of {values['role']} at {values['organization']} has been successfully created.")
 
-def generate_dicts(cur):
+def update(id, key, value=""):
+    """update an existing entry"""
     fields = [d[0] for d in cur.description]
-    while True:
-        rows = cur.fetchmany()
-        if not rows:
-            return
-        for row in rows:
-            yield dict(zip(fields, row))
+    if key in fields:
+        if (len(value) == 0):
+            sql = f"SELECT {key} FROM resume_entries WHERE id = ?"
+            cur.execute(sql, (id,))
+            # using prompt_toolkit
+            editable_prompt = lambda pre_text: prompt(default=pre_text)
+            for row in generate_dicts(cur):
+                value = editable_prompt(row[key])
+
+        sql = f"UPDATE resume_entries SET {key} = ? WHERE id = ?"
+        param = (value, id)
+        cur.execute(sql, param)
+        conn.commit()
+    else:
+        print("invalid key")
 
 class ResumeNode:
     def __init__(self, sec_tag=""):
@@ -302,8 +320,8 @@ class ResumeNode:
             try:
                 if (self.show_id):
                     form += f"ID: {row['id']}\n"
-                form += f"{row['role'].capitalize()}\n"
-                form += f"{row['organization'].capitalize()}\n"
+                form += f"{row['role'].title()}\n"
+                form += f"{row['organization'].title()}\n"
                 form += f"{row['start']} - {row['end']}\n"
                 if (self.show_street):
                     form += f"{row['street'].title()}\n"
