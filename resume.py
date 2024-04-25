@@ -70,43 +70,149 @@ def close_resume():
 atexit.register(close_resume)
 
 # Create a Resume Entry
+def enter_text(key, q, values):
+    """
+    Accepts a user input from the questionnaire q, store the response in values[key].
+    If nothing is provided (an empty string), function either stores the empty string as the value or keep the originally stored value if there's one.
+    """
+    ans = input("\n" + q + "\n> ")
+    if (len(ans) == 0 and key in values):
+        pass
+    else:
+        values[key] = ans
+
+def enter_integer(key, q, values):
+    """
+    Similar to exter_text(key, q, values) but for integer input
+    """
+    ans = input("\n" + q + "\n> ")
+    if (len(ans) == 0 and key in values):
+        pass
+    else:
+        try:
+            values[key] = int(ans)
+        except:
+            values[key] = 0
+
+
+def enter_text_multiple(key, q, values):
+    """
+    Similar to enter(key, q, values), but accepts values of a CSV format and stores it as a list.
+    """
+    ans = input("\n" + q + "\n>")
+    if (len(ans) == 0 and key in values):
+        pass
+    else:
+        ans_list = [word.strip() for word in ans.split(',')]
+        values[key] = json.dumps(ans_list)
+
 def enter():
     values = {}
     values['is_active'] = 1
     retry = "n"
     while (retry == "n"):
-        values['role'] = input("\nWhat was the role/title of the position? \n> ")
-        values['organization'] = input(f"\nWhat was the name of the organization that you had the {values['role']} position? \n> ")
-        values['start'] = input(f"\nWhen did you start taking the {values['role']} position at {values['organization']}? (YYYY-MM-DD) \n> ")
-        values['end'] = input(f"\nWhen did you end taking the {values['role']} position at {values['organization']}? (YYYY-MM-DD) \n> ")
-        values['city'] = input(f"\nIn which city was your workplace in {values['organization']} located? \n> ")
-        values['street'] = input(f"\nWhat was the street address of your workplace in {values['organization']}? \n> ")
-        values['state'] = input(f"\nIn which state was your workplace in {values['organization']} located? \n> ")
-        values['zipcode'] = input(f"\nWhat was the zipcode of your workplace in {values['organization']} \n> ")
-        values['country'] = input(f"\nIn which country was your workplace in {values['organization']} located? \n> ")
-        values['short'] = input(f"\nDescribe your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume: \n> ")
-        values['medium'] = input(f"\nDescribe your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume: \n> ")
-        values['long'] = input(f"\nDescribe your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume: \n> ")
-        values['excellency_short'] = input(f"\nProvide the proof of excellency of your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume: \n> ")
-        values['excellency_medium'] = input(f"\nProvide the proof of excellency of your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume: \n> ")
-        values['excellency_long'] = input(f"\nProvide the proof of excellency of your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume: \n> ")
-        values['problem_short'] = input(f"\nWhat were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume: \n> ")
-        values['problem_medium'] = input(f"\nWhat were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume: \n> ")
-        values['problem_long'] = input(f"\nWhat were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume: \n> ")
-        values['challenge_short'] = input(f"\nWhat were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume: \n> ")
-        values['challenge_medium'] = input(f"\nWhat were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume: \n> ")
-        values['challenge_long'] = input(f"\nWhat were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume: \n> ")
-        skillset_input = input(f"\nList your relevant skills to the {values['role']} role in {values['organization']} (separated by comma) \n> ")
-        skillset_list = [word.strip() for word in skillset_input.split(',')]
-        values['skillset'] = json.dumps(skillset_list)
-        try:
-            values['salary'] = int(input(f"What was the salary of the {values['role']} position in {values['organization']} in USD? \n> "))
-        except:
-            values['salary'] = 0
-        values['reference'] = input(f"Provide the reference information if you have one: \n> ")
-        hashtag_input = input(f"List hashtags for this resume entry ({values['role']} at {values['organization']}) separated by commas: \n> ")
-        hashtag_list = [word.strip() for word in hashtag_input.split(',')]
-        values['hashtag'] = json.dumps(hashtag_list)
+        print("\n(For leaving any entry empty or keeping the existing value without making any changes, just press enter to skip the entry.\n")
+
+        key = 'role'
+        q = "What was the role/title of the position?"
+        enter_text(key, q, values)
+
+        key = 'organization'
+        q = f"What was the name of the organization that you had the {values['role']} position?"
+        enter_text(key, q, values)
+
+        key = 'start'
+        q = f"When did you start taking the {values['role']} position at {values['organization']}? (YYYY-MM-DD)"
+        enter_text(key, q, values)
+
+        key = 'end'
+        q = f"When did you end taking the {values['role']} position at {values['organization']}? (YYYY-MM-DD)"
+        enter_text(key, q, values)
+
+        key = 'city'
+        q = f"In which city was your workplace in {values['organization']} located?"
+        enter_text(key, q, values)
+
+        key = 'street'
+        q = f"What was the street address of your workplace in {values['organization']}?"
+        enter_text(key, q, values)
+
+        key = 'state'
+        q = f"In which state was your workplace in {values['organization']} located?"
+        enter_text(key, q, values)
+
+        key = 'zipcode'
+        q = f"What was the zipcode of your workplace in {values['organization']}"
+        enter_text(key, q, values)
+
+        key = 'country'
+        q = f"In which country was your workplace in {values['organization']} located?"
+        enter_text(key, q, values)
+
+        key = 'short'
+        q = f"Describe your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'medium'
+        q = f"Describe your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'long'
+        q = f"Describe your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'excellency_short'
+        q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'excellency_medium'
+        q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'excellency_long'
+        q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'problem_short'
+        q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'problem_medium'
+        q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'problem_long'
+        q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'challenge_short'
+        q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'challenge_medium'
+        q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'challenge_long'
+        q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume:"
+        enter_text(key, q, values)
+
+        key = 'skillset'
+        q = f"List your relevant skills to the {values['role']} role in {values['organization']} (separated by comma)"
+        enter_text_multiple(key, q, values)
+
+        ket = 'salary'
+        q = f"What was the salary of the {values['role']} position in {values['organization']} in USD?"
+        enter_integer(key, q, values)
+
+        key = 'reference'
+        q = f"Provide the reference information if you have one:"
+        enter_text(key, q, values)
+
+        key = 'hashtag'
+        q = f"List hashtags for this resume entry ({values['role']} at {values['organization']}) separated by commas:"
+        enter_text_multiple(key, q, values)
+
         retry = input(f"Is the information correct? (y/n)\n{values}\n")
     return values
 
@@ -114,7 +220,9 @@ def create():
     """create a new resume entry"""
     values = enter()
     fields = values.keys()
-    sql = f"INSERT INTO resume_entries ({', '.join(fields)}) VALUES ({', '.join(['?' for _ in fields])})"
+    sql = f"""
+    INSERT INTO resume_entries ({', '.join(fields)}) VALUES ({', '.join(['?' for _ in fields])})
+    """
     cur.execute(sql, list(values.values()))
     conn.commit()
     print(f"A new resume entry of {values['role']} at {values['organization']} has been successfully created.")
@@ -146,13 +254,13 @@ class resume(object):
         self.show_country = True
         self.show_dates = True
         self.show_months = True
-        #self.show_period_length = True  # e.g., (18 months)
         self.show_reference = True
         self.show_skillset = True
     def print(self):
         for row in generate_dicts(cur):
             form = f""
             try:
+                form += f"ID: {row['id']}\n"
                 form += f"{row['role']}\n"
                 form += f"{row['organization']}\n"
                 form += f"{row['start']} - {row['end']}\n"
