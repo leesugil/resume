@@ -62,6 +62,8 @@ cur.execute("""
             )
             """)
 
+print("'conn' is the current connection to the resume db, 'cur' is the current cursor to it.")
+
 def close_resume():
     print("resume: Closing cursor and connector")
     cur.close()
@@ -95,6 +97,7 @@ def enter_integer(key, q, values):
             values[key] = int(ans)
         except:
             values[key] = 0
+    print("")
 
 def enter_text_multiline(key, q, values):
     """
@@ -123,13 +126,14 @@ def enter_text_csv(key, q, values):
     else:
         ans_list = [word.strip() for word in ans.split(',')]
         values[key] = json.dumps(ans_list)
+    print("")
 
 def enter():
     values = {}
     values['is_active'] = 1
     retry = "n"
     while (retry == "n"):
-        print("\n(For leaving any entry empty or keeping the existing value without making any changes, just press enter to skip the entry.\n")
+        print("\n(For leaving any entry empty or keeping the existing value without making any changes, just press enter to skip the entry.)\n")
 
         key = 'role'
         q = "What was the role/title of the position?"
@@ -254,13 +258,15 @@ def generate_dicts(cur):
         for row in rows:
             yield dict(zip(fields, row))
 
-class resume(object):
-    def refresh(self):
-        cur.execute("SELECT * FROM resume_entries WHERE is_active = 1")
-    def __init__(self):
-        self.refresh()
+class ResumeNode:
+    def __init__(self, sec_tag=""):
+        self.tag = sec_tag
+        self.next = None
+
+        # Display options
         self.theme = "default"
         self.length = "short"   # medium, long
+        self.show_id = True
         self.show_description = True
         self.show_proof_of_excellency = True
         self.show_problems_solved = True
@@ -274,31 +280,47 @@ class resume(object):
         self.show_months = True
         self.show_reference = True
         self.show_skillset = True
+
+    def gen_sql(self):
+        sql = "SELECT * FROM resume_entries WHERE is_active = 1"
+        if (self.tag != ""):
+            sql += " AND hashtag LIKE ?"
+            return sql, ('%' + self.tag + '%',)
+        return sql, ()
+    def refresh(self):
+        sql, params = self.gen_sql()
+        cur.execute(sql, params)
+
     def print(self):
+        # Loading data from DB
+        self.refresh()
+
+        if (len(self.tag) != 0):
+            print(self.tag.capitalize())
         for row in generate_dicts(cur):
             form = f""
             try:
-                form += f"ID: {row['id']}\n"
-                form += f"{row['role']}\n"
-                form += f"{row['organization']}\n"
+                if (self.show_id):
+                    form += f"ID: {row['id']}\n"
+                form += f"{row['role'].capitalize()}\n"
+                form += f"{row['organization'].capitalize()}\n"
                 form += f"{row['start']} - {row['end']}\n"
                 if (self.show_street):
-                    form += f"{row['street']}\n"
+                    form += f"{row['street'].title()}\n"
                 if (self.show_city):
-                    form += f"{row['city']}\n"
+                    form += f"{row['city'].title()}\n"
                 if (self.show_state):
-                    form += f"{row['state']}\n"
+                    form += f"{row['state'].upper()}\n"
                 if (self.show_zipcode):
                     form += f"{row['zipcode']}\n"
                 if (self.show_country):
-                    form += f"{row['country']}\n"
+                    form += f"{row['country'].title()}\n"
                 if (self.length != "short" and self.length != "medium" and self.length != "long"):
-                    print("Length error, setting to short")
                     self.length = "short"
                 if (self.show_description):
                     form += "Description:\n"
                     key = self.length
-                    form += f"{row[key]}\n"
+                    form += f"{row[key].capitalize()}\n"
                 if (self.show_proof_of_excellency):
                     form += "Proof of Excellency:\n"
                     key = "excellency_" + self.length
@@ -312,11 +334,36 @@ class resume(object):
                     key = "challenge_" + self.length
                     form += f"{row[key]}\n"
                 if (self.show_reference):
-                    form += f"Refrence: {row['reference']}\n"
+                    form += f"Refrence: {row['reference'].title()}\n"
                 if (self.show_skillset):
                     form += "Skills: "
-                    form += ", ".join(json.loads(row['skillset']))
+                    form += ", ".join(json.loads(row['skillset'].title()))
             except:
                 print("Error loading a printout form")
-            print("\n"+form)
-        self.refresh()
+            print(form)
+
+class Resume:
+    def __init__(self):
+        self.head = None
+
+    def append(self, hashtag=""):
+        """
+        Append a new resume section (node) with a hashtag to be used as a section title and filter for resume entries.
+        """
+        section = ResumeNode(hashtag)
+        if not self.head:
+            self.head = section
+            return
+        last_node = self.head
+        while last_node.next:
+            last_node = last_node.next
+        last_node.next = section
+
+    def print(self):
+        """
+        Print all resume sections.
+        """
+        current_node = self.head
+        while current_node:
+            current_node.print()
+            current_node = current_node.next
