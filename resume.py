@@ -21,6 +21,7 @@ cur.execute("""
             CREATE TABLE IF NOT EXISTS resume_entries (
             id INTEGER PRIMARY KEY,
             is_active INTEGER,
+            summary TEXT,
             start TEXT,
             end TEXT,
             role TEXT,
@@ -52,6 +53,7 @@ cur.execute("""
             CREATE TABLE IF NOT EXISTS portfolio_entries (
             id INTEGER PRIMARY KEY,
             is_active INTEGER,
+            summary TEXT,
             title TEXT,
             short TEXT,
             medium TEXT,
@@ -117,7 +119,7 @@ def enter_text_multiline(key, q, values):
         more = input("  ")
         if more == "":
             break
-        ans += more
+        ans += "\n" + more
 
     if (len(ans) == 0 and key in values):
         pass
@@ -151,6 +153,10 @@ def enter():
         q = f"What was the name of the organization that you had the {values['role']} position?"
         enter_text(key, q, values)
 
+        key = 'summary'
+        q = f"(Optional) Add a brief summary about the {values['role']} role if you want an extra paragraph to be shown in your resume."
+        enter_text_multiline(key, q, values)
+
         key = 'start'
         q = f"When did you start taking the {values['role']} position at {values['organization']}? (YYYY-MM-DD)"
         enter_text(key, q, values)
@@ -179,48 +185,48 @@ def enter():
         q = f"In which country was your workplace in {values['organization']} located?"
         enter_text(key, q, values)
 
-        key = 'short'
-        q = f"Describe your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
-        enter_text_multiline(key, q, values)
-
         key = 'medium'
         q = f"Describe your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text_multiline(key, q, values)
+
+        key = 'short'
+        q = f"Describe your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
         enter_text_multiline(key, q, values)
 
         key = 'long'
         q = f"Describe your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
         enter_text_multiline(key, q, values)
 
-        key = 'excellency_short'
-        q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
-        enter_text_multiline(key, q, values)
-
         key = 'excellency_medium'
         q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text_multiline(key, q, values)
+
+        key = 'excellency_short'
+        q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} briefly for the version shown in the \"short\" version of your resume:"
         enter_text_multiline(key, q, values)
 
         key = 'excellency_long'
         q = f"Provide the proof of excellency of your {values['role']} role at {values['organization']} in a long length for the version shown in the \"long\" version of your resume:"
         enter_text_multiline(key, q, values)
 
-        key = 'problem_short'
-        q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
-        enter_text_multiline(key, q, values)
-
         key = 'problem_medium'
         q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text_multiline(key, q, values)
+
+        key = 'problem_short'
+        q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
         enter_text_multiline(key, q, values)
 
         key = 'problem_long'
         q = f"What were some main problems in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a long length for the version shown in the \"long\" version of your resume:"
         enter_text_multiline(key, q, values)
 
-        key = 'challenge_short'
-        q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
-        enter_text_multiline(key, q, values)
-
         key = 'challenge_medium'
         q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe in a medium length for the version shown in the \"medium\" version of your resume:"
+        enter_text_multiline(key, q, values)
+
+        key = 'challenge_short'
+        q = f"What were some main challenges in your {values['role']} role at {values['organization']} and how did you solve them? Describe briefly for the version shown in the \"short\" version of your resume:"
         enter_text_multiline(key, q, values)
 
         key = 'challenge_long'
@@ -229,9 +235,9 @@ def enter():
 
         key = 'skillset'
         q = f"List your relevant skills to the {values['role']} role in {values['organization']} (separated by comma)"
-        enter_text_csv(key, q, values)
+        enter_text_multiline(key, q, values)
 
-        ket = 'salary'
+        key = 'salary'
         q = f"What was the salary of the {values['role']} position in {values['organization']} in USD?"
         enter_integer(key, q, values)
 
@@ -243,7 +249,8 @@ def enter():
         q = f"List hashtags for this resume entry ({values['role']} at {values['organization']}) separated by commas:"
         enter_text_csv(key, q, values)
 
-        retry = input(f"Is the information correct? (y/n)\n{values}\n")
+        print(values)
+        retry = input(f"Is the information correct? (y/n) ")
     return values
 
 def insert():
@@ -257,11 +264,15 @@ def insert():
     conn.commit()
     print(f"A new resume entry of {values['role']} at {values['organization']} has been successfully created.")
 
-def update(id, key, value=""):
-    """update an existing entry"""
+def update(id, key, value=None):
+    """
+    update(id, key, value=None)
+    update an existing entry
+    """
+    cur.execute("SELECT * FROM resume_entries LIMIT 1")
     fields = [d[0] for d in cur.description]
     if key in fields:
-        if (len(value) == 0):
+        if not value:
             sql = f"SELECT {key} FROM resume_entries WHERE id = ?"
             cur.execute(sql, (id,))
             # using prompt_toolkit
@@ -276,15 +287,19 @@ def update(id, key, value=""):
     else:
         print("invalid key")
 
-class ResumeNode:
-    def __init__(self, sec_tag=""):
-        self.tag = sec_tag
+class Resume:
+    def __init__(self, hashtag="", without="", length="medium", theme="default", hide_empty=True):
+        self.tag = hashtag
+        self.without = without
         self.next = None
 
         # Display options
-        self.theme = "default"
-        self.length = "short"   # medium, long
+        self.theme = theme
+        self.length = length        # medium, long
+        self.hide_empty = hide_empty
         self.show_id = True
+        self.show_summary = True
+        self.show_salary = False
         self.show_description = True
         self.show_proof_of_excellency = True
         self.show_problems_solved = True
@@ -298,12 +313,19 @@ class ResumeNode:
         self.show_months = True
         self.show_reference = True
         self.show_skillset = True
+        self.show_hashtag = False
 
     def gen_sql(self):
         sql = "SELECT * FROM resume_entries WHERE is_active = 1"
         if (self.tag != ""):
             sql += " AND hashtag LIKE ?"
+            if (self.without != ""):
+                sql += " AND hashtag NOT LIKE ?"
+                return sql, ('%' + self.tag + '%', '%' + self.without + '%',)
             return sql, ('%' + self.tag + '%',)
+        if (self.without != ""):
+            sql += " AND hashtag NOT LIKE ?"
+            return sql, ('%' + self.without + '%',)
         return sql, ()
     def refresh(self):
         sql, params = self.gen_sql()
@@ -317,71 +339,104 @@ class ResumeNode:
             print(self.tag.capitalize())
         for row in generate_dicts(cur):
             form = f""
+
+            new_item = lambda dic, key ="": (f"{dic[key]}\n" if key in dic and not (self.hide_empty and dic[key] == "") else "")
+            new_item_title = lambda dic, key ="": (f"{dic[key].title()}\n" if key in dic and not (self.hide_empty and dic[key] == "") else "")
+            new_item_upper = lambda dic, key ="": (f"{dic[key].upper()}\n" if key in dic and not (self.hide_empty and dic[key] == "") else "")
+
             try:
                 if (self.show_id):
                     form += f"ID: {row['id']}\n"
-                form += f"{row['role'].title()}\n"
-                form += f"{row['organization'].title()}\n"
-                form += f"{row['start']} - {row['end']}\n"
+
+                form += new_item(row, 'role')
+                form += new_item(row, 'organization')
+                if (self.show_summary):
+                    form += new_item(row, 'summary')
+                if (self.show_salary):
+                    form += f"$ "
+                    form += new_item(row, 'salary')
+
+                if self.hide_empty and (row['start'] == "" and row['end'] == ""):
+                    pass
+                elif row['start'] != "" and row['end'] == "":
+                    form += f"{row['start']}\n"
+                elif row['start'] == "" and row['end'] != "":
+                    form += f"{row['end']}\n"
+                else:
+                    form += f"{row['start']} - {row['end']}\n"
+
                 if (self.show_street):
-                    form += f"{row['street'].title()}\n"
+                    form += new_item(row, 'street')
                 if (self.show_city):
-                    form += f"{row['city'].title()}\n"
+                    form += new_item(row, 'city')
                 if (self.show_state):
-                    form += f"{row['state'].upper()}\n"
+                    form += new_item(row, 'state')
                 if (self.show_zipcode):
-                    form += f"{row['zipcode']}\n"
+                    form += new_item(row, 'zipcode')
                 if (self.show_country):
-                    form += f"{row['country'].title()}\n"
+                    form += new_item(row, 'country')
                 if (self.length != "short" and self.length != "medium" and self.length != "long"):
-                    self.length = "short"
+                    self.length = "medium"
                 if (self.show_description):
                     form += "Description:\n"
                     key = self.length
-                    form += f"{row[key].capitalize()}\n"
+                    form += new_item(row, key)
                 if (self.show_proof_of_excellency):
                     form += "Proof of Excellency:\n"
                     key = "excellency_" + self.length
-                    form += f"{row[key]}\n"
+                    form += new_item(row, key)
                 if (self.show_problems_solved):
                     form += "Problems Solved:\n"
                     key = "problem_" + self.length
-                    form += f"{row[key]}\n"
+                    form += new_item(row, key)
                 if (self.show_most_challenging_experience):
                     form += "Most Challenging Experience:\n"
                     key = "challenge_" + self.length
-                    form += f"{row[key]}\n"
+                    form += new_item(row, key)
                 if (self.show_reference):
-                    form += f"Refrence: {row['reference'].title()}\n"
+                    form += "Reference: "
+                    form += new_item(row, 'reference')
                 if (self.show_skillset):
                     form += "Skills: "
-                    form += ", ".join(json.loads(row['skillset'].title()))
+                    form += new_item(row, 'skillset')
+                if (self.show_hashtag):
+                    form += "Hashtag: "
+                    form += ", ".join(json.loads(row['hashtag'].title()))
             except:
                 print("Error loading a printout form")
             print(form)
+    def printall(self):
+        self.print()
+        if self.next:
+            self.next.printall()
+    
+    def append(self, hashtag="", without="", length=None, theme=None, hide_empty=None):
+        if length is None: length = self.length
+        if theme is None: theme = self.theme
+        if hide_empty is None: hide_empty = self.hide_empty
+        if self.next:
+            self.next.append(hashtag, without, length, theme, hide_empty)
+        else:
+            self.next = Resume(hashtag, without, length, theme, hide_empty)
 
-class Resume:
-    def __init__(self):
-        self.head = None
+    def toggle_show_id(self):
+        if self.next:
+            self.next.toggle_show_id()
+        self.show_id = not self.show_id
 
-    def append(self, hashtag=""):
-        """
-        Append a new resume section (node) with a hashtag to be used as a section title and filter for resume entries.
-        """
-        section = ResumeNode(hashtag)
-        if not self.head:
-            self.head = section
-            return
-        last_node = self.head
-        while last_node.next:
-            last_node = last_node.next
-        last_node.next = section
 
-    def print(self):
-        """
-        Print all resume sections.
-        """
-        current_node = self.head
-        while current_node:
-            current_node.print()
-            current_node = current_node.next
+
+
+# shortcut
+resume = Resume("contact")
+resume.show_description = False
+resume.show_proof_of_excellency = False
+resume.show_problems_solved = False
+resume.show_most_challenging_experience = False
+resume.show_reference = False
+resume.show_skillset = False
+resume.append("work")
+resume.append(hashtag="education", without="work")
+resume.append("skill")
+resume.append("certificate")
+resume.append("award")
